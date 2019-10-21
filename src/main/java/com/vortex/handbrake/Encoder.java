@@ -7,12 +7,12 @@ import java.util.regex.Pattern;
 
 public class Encoder {
 
-    public static final Pattern PATTERN = Pattern.compile(".*(\\d+\\.\\d+)\\s\\%");
+    public static final Pattern PATTERN = Pattern.compile(".*\\s(\\d+\\.\\d+)\\s\\%");
 
     public static void main(String[] args) throws IOException {
         PrintStream printStream = new PrintStream("d:\\output_log.txt");
         Encoder e = new Encoder();
-        e.encode("d:\\Temp\\handbrake\\P9012622.MOV", "D:\\t.mp4",
+        e.encode(new File("d:\\Temp\\handbrake\\P9012622.MOV"), new File("D:\\t.mp4"),
                 a -> e.writeToFile(printStream, a), a -> System.out.println("---------- " + a));
         printStream.close();
     }
@@ -22,11 +22,11 @@ public class Encoder {
         printStream.flush();
     }
 
-    public void encode(String srcFile, String dstFile, Consumer<String> logConsumer, Consumer<String> progressConsumer) {
+    public void encode(File srcFile, File dstFile, Consumer<String> logConsumer, Consumer<String> progressConsumer) {
         try {
             Process process = Runtime.getRuntime().exec("d:\\Temp\\handbrake\\Handbrake\\HandbrakeCLI.exe"
-                            + " -i " + srcFile
-                            + " -o " + dstFile
+                            + " -i " + srcFile.getAbsolutePath()
+                            + " -o " + dstFile.getAbsolutePath()
                             + " -t 1"
                             + " --angle 1"
                             + " -c 1"
