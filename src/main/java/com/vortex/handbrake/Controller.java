@@ -20,7 +20,7 @@ import lombok.Data;
 
 import java.io.File;
 import java.net.URL;
-import java.util.*;
+import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Controller implements Initializable {
@@ -36,19 +36,15 @@ public class Controller implements Initializable {
     @FXML
     private ListView<FileItem> listView;
     @FXML
-    private TextArea textArea;
+    private TextField handbrakePathTextField;
 
     private FilesHelper filesHelper = new FilesHelper();
     private Encoder encoder = new Encoder();
     private AtomicBoolean conversionInProgress = new AtomicBoolean();
-
-    //    private int displayFirstItemIndex = 0;
     private ObservableList<FileItem> filesToConvert = FXCollections.observableArrayList();
-
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-//        terminateButton.disableProperty().set(true);
         listView.setCellFactory(lv -> {
             TextFieldListCell<FileItem> cell = new TextFieldListCell<>();
             cell.setConverter(new StringConverter<FileItem>() {
@@ -123,11 +119,9 @@ public class Controller implements Initializable {
             redraw();
             new Thread(new Task<Void>() {
                 @Override
-                protected Void call() throws Exception {
+                protected Void call() {
                     File dstFile = filesHelper.getDstFile(srcFile);
-                    encoder.encode(srcFile, dstFile, null, progress -> {
-                        updateListView(nextFileToConvert, progress);
-                    });
+                    encoder.encode(srcFile, dstFile, null, progress -> updateListView(nextFileToConvert, progress));
                     filesHelper.copyAttributes(srcFile, dstFile);
                     updateListView(nextFileToConvert, "100%");
                     convertAnyNonConverted();
@@ -162,10 +156,14 @@ public class Controller implements Initializable {
 
     @FXML
     private void convertButtonClicked() {
-        AlertBox box = new AlertBox();
-        box.createAndShow("Start conversion?", AlertBox.Type.YES_CANCEL);
-        if (box.isYesPressed()) {
-            convertAnyNonConverted();
+        if (!new File(handbrakePathTextField.textProperty().getValue().trim()).exists()) {
+            new AlertBox().createAndShow("Please specify path to HandbrakeCLI", AlertBox.Type.CLOSE);
+        } else {
+            AlertBox box = new AlertBox();
+            box.createAndShow("Start conversion?", AlertBox.Type.YES_CANCEL);
+            if (box.isYesPressed()) {
+                convertAnyNonConverted();
+            }
         }
     }
 
