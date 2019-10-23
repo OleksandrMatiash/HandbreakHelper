@@ -20,5 +20,9 @@
                 <include>*.jar</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>target/Handbrake</directory>
+            <outputDirectory>Handbrake</outputDirectory>
+        </fileSet>
     </fileSets>
 </assembly>

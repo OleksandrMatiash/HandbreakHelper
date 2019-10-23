@@ -9,7 +9,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.TextFieldListCell;
 import javafx.scene.input.DragEvent;
@@ -36,12 +35,14 @@ public class Controller implements Initializable {
     @FXML
     private ListView<FileItem> listView;
     @FXML
-    private TextField handbrakePathTextField;
+    private ListView<String> logListView;
 
     private FilesHelper filesHelper = new FilesHelper();
     private Encoder encoder = new Encoder();
     private AtomicBoolean conversionInProgress = new AtomicBoolean();
     private ObservableList<FileItem> filesToConvert = FXCollections.observableArrayList();
+
+    private ObservableList<String> logLines = FXCollections.observableArrayList();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -68,6 +69,7 @@ public class Controller implements Initializable {
         });
 
         listView.setItems(filesToConvert);
+        logListView.setItems(logLines);
         redraw();
     }
 
@@ -121,7 +123,9 @@ public class Controller implements Initializable {
                 @Override
                 protected Void call() {
                     File dstFile = filesHelper.getDstFile(srcFile);
-                    encoder.encode(srcFile, dstFile, null, progress -> updateListView(nextFileToConvert, progress));
+                    encoder.encode(srcFile, dstFile,
+                            logLine -> logLines.add(logLine),
+                            progress -> updateListView(nextFileToConvert, progress));
                     filesHelper.copyAttributes(srcFile, dstFile);
                     updateListView(nextFileToConvert, "100%");
                     convertAnyNonConverted();
@@ -156,14 +160,11 @@ public class Controller implements Initializable {
 
     @FXML
     private void convertButtonClicked() {
-        if (!new File(handbrakePathTextField.textProperty().getValue().trim()).exists()) {
-            new AlertBox().createAndShow("Please specify path to HandbrakeCLI", AlertBox.Type.CLOSE);
-        } else {
-            AlertBox box = new AlertBox();
-            box.createAndShow("Start conversion?", AlertBox.Type.YES_CANCEL);
-            if (box.isYesPressed()) {
-                convertAnyNonConverted();
-            }
+        AlertBox box = new AlertBox();
+        box.createAndShow("Start conversion?", AlertBox.Type.YES_CANCEL);
+        if (box.isYesPressed()) {
+            logLines.clear();
+            convertAnyNonConverted();
         }
     }
 
@@ -176,6 +177,7 @@ public class Controller implements Initializable {
     private void cleanButtonClicked() {
         if (!conversionInProgress.get()) {
             filesToConvert.clear();
+            logLines.clear();
             redraw();
         }
     }

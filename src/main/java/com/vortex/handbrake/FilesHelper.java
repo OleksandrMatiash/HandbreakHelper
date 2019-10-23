@@ -24,4 +24,9 @@ public class FilesHelper {
             return false;
         }
     }
+
+    public String getFileFullPath(String relativePathToFile) {
+        return new File(Encoder.class.getProtectionDomain().getCodeSource().getLocation().getFile())
+                .getParentFile().getAbsoluteFile() + relativePathToFile;
+    }
 }

@@ -1,30 +1,22 @@
 package com.vortex.handbrake;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Encoder {
 
-    public static final Pattern PATTERN = Pattern.compile(".*\\s(\\d+\\.\\d+)\\s\\%");
+    private static final Pattern PATTERN = Pattern.compile(".*\\s(\\d+\\.\\d+)\\s%");
 
-    public static void main(String[] args) throws IOException {
-        PrintStream printStream = new PrintStream("d:\\output_log.txt");
-        Encoder e = new Encoder();
-        e.encode(new File("d:\\Temp\\handbrake\\P9012622.MOV"), new File("D:\\t.mp4"),
-                a -> e.writeToFile(printStream, a), a -> System.out.println("---------- " + a));
-        printStream.close();
-    }
-
-    private void writeToFile(PrintStream printStream, String str) {
-        printStream.println(str);
-        printStream.flush();
-    }
+    private FilesHelper filesHelper = new FilesHelper();
 
     public void encode(File srcFile, File dstFile, Consumer<String> logConsumer, Consumer<String> progressConsumer) {
         try {
-            Process process = Runtime.getRuntime().exec("d:\\Temp\\handbrake\\Handbrake\\HandbrakeCLI.exe"
+            Process process = Runtime.getRuntime().exec(filesHelper.getFileFullPath("/Handbrake/HandbrakeCLI.exe")
                             + " -i " + srcFile.getAbsolutePath()
                             + " -o " + dstFile.getAbsolutePath()
                             + " -t 1"
