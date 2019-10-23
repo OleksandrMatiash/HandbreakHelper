@@ -16,7 +16,7 @@ public class Encoder {
 
     public void encode(File srcFile, File dstFile, Consumer<String> logConsumer, Consumer<String> progressConsumer) {
         try {
-            Process process = Runtime.getRuntime().exec("\"" + filesHelper.getFileFullPath("/Handbrake/HandbrakeCLI.exe") + "\""
+            Process process = Runtime.getRuntime().exec(filesHelper.getFileFullPath("/Handbrake/HandbrakeCLI.exe")
                             + " -i \"" + srcFile.getAbsolutePath() + "\""
                             + " -o \"" + dstFile.getAbsolutePath() + "\""
                             + " -t 1"
@@ -59,8 +59,8 @@ public class Encoder {
             }
             readerErr.close();
         } catch (IOException ex) {
-            printToWriter(logConsumer, "shit happened");
-            System.out.println("shit happened");
+            printToWriter(logConsumer, ex.getMessage());
+            System.out.println(ex.getMessage());
         }
     }
 
@@ -69,5 +69,4 @@ public class Encoder {
             logConsumer.accept(outLine);
         }
     }
-
 }

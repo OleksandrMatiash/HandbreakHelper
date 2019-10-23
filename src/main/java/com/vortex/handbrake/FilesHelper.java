@@ -2,6 +2,8 @@ package com.vortex.handbrake;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -10,7 +12,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class FilesHelper {
 
     public File getDstFile(File srcFile) {
-        return new File(srcFile.getAbsolutePath() + ".mp4");
+        String absolutePath = srcFile.getAbsolutePath();
+        String pathWithoutExtension = absolutePath.substring(0, absolutePath.lastIndexOf("."));
+        return new File(pathWithoutExtension + "_.mp4");
     }
 
     public boolean copyAttributes(File srcFile, File dstFile) {
@@ -26,7 +30,11 @@ public class FilesHelper {
     }
 
     public String getFileFullPath(String relativePathToFile) {
-        return new File(Encoder.class.getProtectionDomain().getCodeSource().getLocation().getFile())
-                .getParentFile().getAbsoluteFile() + relativePathToFile;
+        try {
+            return new File(URLDecoder.decode(Encoder.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8").substring(1))
+                    .getParentFile().getAbsoluteFile() + relativePathToFile;
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 }
