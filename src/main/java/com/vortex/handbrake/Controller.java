@@ -1,5 +1,6 @@
 package com.vortex.handbrake;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -124,7 +125,7 @@ public class Controller implements Initializable {
                 protected Void call() {
                     File dstFile = filesHelper.getDstFile(srcFile);
                     encoder.encode(srcFile, dstFile,
-                            logLine -> logLines.add(logLine),
+                            logLine -> Platform.runLater(() -> logLines.add(logLine)),
                             progress -> updateListView(nextFileToConvert, progress));
                     filesHelper.copyAttributes(srcFile, dstFile);
                     updateListView(nextFileToConvert, "100%");

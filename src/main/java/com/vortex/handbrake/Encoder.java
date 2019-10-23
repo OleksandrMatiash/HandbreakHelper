@@ -10,15 +10,15 @@ import java.util.regex.Pattern;
 
 public class Encoder {
 
-    private static final Pattern PATTERN = Pattern.compile(".*\\s(\\d+\\.\\d+)\\s%");
+    private static final Pattern PATTERN = Pattern.compile(".*\\s(\\d+\\.\\d+)\\s%.*");
 
     private FilesHelper filesHelper = new FilesHelper();
 
     public void encode(File srcFile, File dstFile, Consumer<String> logConsumer, Consumer<String> progressConsumer) {
         try {
-            Process process = Runtime.getRuntime().exec(filesHelper.getFileFullPath("/Handbrake/HandbrakeCLI.exe")
-                            + " -i " + srcFile.getAbsolutePath()
-                            + " -o " + dstFile.getAbsolutePath()
+            Process process = Runtime.getRuntime().exec("\"" + filesHelper.getFileFullPath("/Handbrake/HandbrakeCLI.exe") + "\""
+                            + " -i \"" + srcFile.getAbsolutePath() + "\""
+                            + " -o \"" + dstFile.getAbsolutePath() + "\""
                             + " -t 1"
                             + " --angle 1"
                             + " -c 1"
