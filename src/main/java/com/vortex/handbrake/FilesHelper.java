@@ -11,12 +11,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class FilesHelper {
 
-    public File getDstFile(File srcFile) {
-        String absolutePath = srcFile.getAbsolutePath();
-        String pathWithoutExtension = absolutePath.substring(0, absolutePath.lastIndexOf("."));
-        return new File(pathWithoutExtension + "_.mp4");
-    }
-
     public boolean copyAttributes(File srcFile, File dstFile) {
         try {
             BasicFileAttributes srcAttr = Files.getFileAttributeView(srcFile.toPath(), BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).readAttributes();
@@ -31,7 +25,7 @@ public class FilesHelper {
 
     public String getFileFullPath(String relativePathToFile) {
         try {
-            return new File(URLDecoder.decode(Encoder.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8").substring(1))
+            return new File(URLDecoder.decode(FilesHelper.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8").substring(1))
                     .getParentFile().getAbsoluteFile() + relativePathToFile;
         } catch (UnsupportedEncodingException e) {
             throw new IllegalArgumentException(e);

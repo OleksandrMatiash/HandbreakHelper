@@ -24,5 +24,9 @@
             <directory>target/Handbrake</directory>
             <outputDirectory>Handbrake</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>target/IrfanView</directory>
+            <outputDirectory>IrfanView</outputDirectory>
+        </fileSet>
     </fileSets>
 </assembly>

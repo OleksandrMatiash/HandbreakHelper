@@ -1,5 +1,7 @@
 package com.vortex.handbrake;
 
+import com.vortex.handbrake.encoder.EncoderStrategiesFactory;
+import com.vortex.handbrake.encoder.EncoderStrategy;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -39,7 +41,7 @@ public class Controller implements Initializable {
     private ListView<String> logListView;
 
     private FilesHelper filesHelper = new FilesHelper();
-    private Encoder encoder = new Encoder();
+    private EncoderStrategiesFactory encoderStrategiesFactory = new EncoderStrategiesFactory();
     private AtomicBoolean conversionInProgress = new AtomicBoolean();
     private ObservableList<FileItem> filesToConvert = FXCollections.observableArrayList();
 
@@ -123,12 +125,17 @@ public class Controller implements Initializable {
             new Thread(new Task<Void>() {
                 @Override
                 protected Void call() {
-                    File dstFile = filesHelper.getDstFile(srcFile);
-                    encoder.encode(srcFile, dstFile,
-                            logLine -> Platform.runLater(() -> logLines.add(logLine)),
-                            progress -> updateListView(nextFileToConvert, progress));
-                    filesHelper.copyAttributes(srcFile, dstFile);
-                    updateListView(nextFileToConvert, "100%");
+                    try {
+                        File dstFile = encoderStrategiesFactory.create(srcFile)
+                                .encode(srcFile,
+                                        logLine -> Platform.runLater(() -> logLines.add(logLine)),
+                                        progress -> updatePrgrs(nextFileToConvert, progress));
+                        filesHelper.copyAttributes(srcFile, dstFile);
+                        updatePrgrs(nextFileToConvert, "100%");
+                    } catch (Exception e) {
+                        nextFileToConvert.setErrMsg(e.getMessage());
+                        listView.refresh();
+                    }
                     convertAnyNonConverted();
                     return null;
                 }
@@ -142,19 +149,13 @@ public class Controller implements Initializable {
     private FileItem getNextFileToConvert() {
         for (FileItem fileItem : filesToConvert) {
             if (fileItem.getErrMsg() == null && fileItem.getConversionProgress() == null) {
-                if (!filesHelper.getDstFile(fileItem.getFile()).exists()) {
-                    return fileItem;
-                } else {
-                    fileItem.setErrMsg("DST file already exists");
-                    listView.refresh();
-                }
-                break;
+                return fileItem;
             }
         }
         return null;
     }
 
-    private void updateListView(FileItem fileItem, String newProgress) {
+    private void updatePrgrs(FileItem fileItem, String newProgress) {
         fileItem.setConversionProgress(newProgress);
         listView.refresh();
     }

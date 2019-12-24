@@ -1,4 +1,6 @@
-package com.vortex.handbrake;
+package com.vortex.handbrake.encoder;
+
+import com.vortex.handbrake.FilesHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -8,14 +10,15 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Encoder {
-
+public class VideoEncoderStrategy implements EncoderStrategy {
     private static final Pattern PATTERN = Pattern.compile(".*\\s(\\d+\\.\\d+)\\s%.*");
 
     private FilesHelper filesHelper = new FilesHelper();
 
-    public void encode(File srcFile, File dstFile, Consumer<String> logConsumer, Consumer<String> progressConsumer) {
+    @Override
+    public File encode(File srcFile, Consumer<String> logConsumer, Consumer<String> progressConsumer) {
         try {
+            File dstFile = getDstFile(srcFile);
             Process process = Runtime.getRuntime().exec(filesHelper.getFileFullPath("/Handbrake/HandbrakeCLI.exe")
                             + " -i \"" + srcFile.getAbsolutePath() + "\""
                             + " -o \"" + dstFile.getAbsolutePath() + "\""
@@ -58,10 +61,22 @@ public class Encoder {
                 processIsAlive = process.isAlive();
             }
             readerErr.close();
+            return dstFile;
         } catch (IOException ex) {
             printToWriter(logConsumer, ex.getMessage());
             System.out.println(ex.getMessage());
+            throw new IllegalArgumentException("error");
         }
+    }
+
+    private File getDstFile(File srcFile) {
+        String absolutePath = srcFile.getAbsolutePath();
+        String pathWithoutExtension = absolutePath.substring(0, absolutePath.lastIndexOf('.'));
+        File result = new File(pathWithoutExtension + "_.mp4");
+        if (result.exists()) {
+            throw new IllegalArgumentException("DST file already exists");
+        }
+        return result;
     }
 
     private void printToWriter(Consumer<String> logConsumer, String outLine) {

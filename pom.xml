@@ -115,6 +115,7 @@
                             <tasks>
                                 <!-- Using an ant task to deflate webinstaller.zip -->
                                 <unzip src="src\main\resources\Handbrake.zip" dest="${project.build.directory}"/>
+                                <unzip src="src\main\resources\IrfanView.zip" dest="${project.build.directory}"/>
                             </tasks>
                         </configuration>
                         <goals>
