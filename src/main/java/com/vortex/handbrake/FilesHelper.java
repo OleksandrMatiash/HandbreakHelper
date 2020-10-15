@@ -11,7 +11,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class FilesHelper {
 
-    public boolean copyAttributes(File srcFile, File dstFile) {
+    private FilesHelper() {
+    }
+
+    public static boolean copyAttributes(File srcFile, File dstFile) {
         try {
             BasicFileAttributes srcAttr = Files.getFileAttributeView(srcFile.toPath(), BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).readAttributes();
             BasicFileAttributeView dstAttrView = Files.getFileAttributeView(dstFile.toPath(), BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
@@ -23,12 +26,27 @@ public class FilesHelper {
         }
     }
 
-    public String getFileFullPath(String relativePathToFile) {
+    public static String getFileFullPath(String relativePathToFile) {
         try {
             return new File(URLDecoder.decode(FilesHelper.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8").substring(1))
                     .getParentFile().getAbsoluteFile() + relativePathToFile;
         } catch (UnsupportedEncodingException e) {
             throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static void deleteFile(File dstFile) {
+        if (dstFile != null && dstFile.exists()) {
+            for (int i = 0; i < 10; i++) {
+                boolean delete = dstFile.delete();
+                if (delete) {
+                    break;
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
         }
     }
 }

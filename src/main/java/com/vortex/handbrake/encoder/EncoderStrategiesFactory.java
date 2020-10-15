@@ -7,7 +7,7 @@ import static java.util.Arrays.asList;
 
 public class EncoderStrategiesFactory {
 
-    private static final List<String> VIDEO_FILES = asList("mov", "mp4");
+    private static final List<String> VIDEO_FILES = asList("mov", "mp4", "flv");
     private static final List<String> PHOTO_FILES = asList("jpg", "jpeg", "png");
 
     private final EncoderStrategy videoEncoderStrategy;

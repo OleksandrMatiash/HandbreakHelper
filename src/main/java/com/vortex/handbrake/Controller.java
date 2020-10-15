@@ -21,11 +21,15 @@ import javafx.util.StringConverter;
 import lombok.Data;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Controller implements Initializable {
+
+    private static final BigDecimal ONE_HUNDRED_PERCENTS = new BigDecimal(100);
 
     @FXML
     private Button convertButton;
@@ -40,12 +44,14 @@ public class Controller implements Initializable {
     @FXML
     private ListView<String> logListView;
 
-    private FilesHelper filesHelper = new FilesHelper();
     private EncoderStrategiesFactory encoderStrategiesFactory = new EncoderStrategiesFactory();
     private AtomicBoolean conversionInProgress = new AtomicBoolean();
     private ObservableList<FileItem> filesToConvert = FXCollections.observableArrayList();
 
     private ObservableList<String> logLines = FXCollections.observableArrayList();
+
+    private EncoderStrategy currentConversion;
+    private boolean terminateButtonClicked;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -54,11 +60,9 @@ public class Controller implements Initializable {
             cell.setConverter(new StringConverter<FileItem>() {
                 @Override
                 public String toString(FileItem fileItem) {
-                    String msg = "";
-                    if (fileItem.getErrMsg() != null) {
-                        msg = " - " + fileItem.getErrMsg();
-                    } else if (fileItem.getConversionProgress() != null) {
-                        msg = " - " + fileItem.getConversionProgress();
+                    String msg = fileItem.getDescription();
+                    if (!msg.isEmpty()) {
+                        msg = " - " + msg;
                     }
                     return fileItem.getFile().getAbsolutePath() + msg;
                 }
@@ -118,7 +122,11 @@ public class Controller implements Initializable {
 
     private void convertAnyNonConverted() {
         FileItem nextFileToConvert = getNextFileToConvert();
-        if (nextFileToConvert != null) {
+        if (nextFileToConvert != null && !terminateButtonClicked) {
+            nextFileToConvert.setConversionProgress(new BigDecimal(0));
+            nextFileToConvert.setErrMsg(null);
+            listView.refresh();
+
             File srcFile = nextFileToConvert.getFile();
             conversionInProgress.set(true);
             redraw();
@@ -126,12 +134,20 @@ public class Controller implements Initializable {
                 @Override
                 protected Void call() {
                     try {
-                        File dstFile = encoderStrategiesFactory.create(srcFile)
+                        EncoderStrategy encoderStrategy = encoderStrategiesFactory.create(srcFile);
+                        currentConversion = encoderStrategy;
+                        File dstFile = encoderStrategy
                                 .encode(srcFile,
                                         logLine -> Platform.runLater(() -> logLines.add(logLine)),
                                         progress -> updatePrgrs(nextFileToConvert, progress));
-                        filesHelper.copyAttributes(srcFile, dstFile);
-                        updatePrgrs(nextFileToConvert, "100%");
+                        if (!terminateButtonClicked) {
+                            FilesHelper.copyAttributes(srcFile, dstFile);
+                            updatePrgrs(nextFileToConvert, ONE_HUNDRED_PERCENTS);
+                        } else {
+                            FilesHelper.deleteFile(dstFile);
+                            nextFileToConvert.setErrMsg("canceled");
+                            listView.refresh();
+                        }
                     } catch (Exception e) {
                         nextFileToConvert.setErrMsg(e.getMessage());
                         listView.refresh();
@@ -141,6 +157,8 @@ public class Controller implements Initializable {
                 }
             }).start();
         } else {
+            terminateButtonClicked = false;
+            currentConversion = null;
             conversionInProgress.set(false);
             redraw();
         }
@@ -148,14 +166,14 @@ public class Controller implements Initializable {
 
     private FileItem getNextFileToConvert() {
         for (FileItem fileItem : filesToConvert) {
-            if (fileItem.getErrMsg() == null && fileItem.getConversionProgress() == null) {
+            if (!ONE_HUNDRED_PERCENTS.equals(fileItem.getConversionProgress())) {
                 return fileItem;
             }
         }
         return null;
     }
 
-    private void updatePrgrs(FileItem fileItem, String newProgress) {
+    private void updatePrgrs(FileItem fileItem, BigDecimal newProgress) {
         fileItem.setConversionProgress(newProgress);
         listView.refresh();
     }
@@ -172,7 +190,12 @@ public class Controller implements Initializable {
 
     @FXML
     private void terminateButtonClicked() {
-        // TODO
+        AlertBox box = new AlertBox();
+        box.createAndShow("Terminate conversion?", AlertBox.Type.YES_CANCEL);
+        if (box.isYesPressed() && currentConversion != null) {
+            terminateButtonClicked = true;
+            currentConversion.terminate();
+        }
     }
 
     @FXML
@@ -186,9 +209,16 @@ public class Controller implements Initializable {
 
     @Data
     private static class FileItem {
-        private File file;
-        private String conversionProgress;
+        static final DecimalFormat FORMAT = new DecimalFormat("##0.00");
+
+        private final File file;
+        private BigDecimal conversionProgress;
         private String errMsg;
+
+        String getDescription() {
+            return (conversionProgress != null ? FORMAT.format(conversionProgress) + "%" : "")
+                    + (errMsg != null ? " " + errMsg : "");
+        }
 
         FileItem(File file) {
             this.file = file;

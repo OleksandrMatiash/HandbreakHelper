@@ -1,24 +1,24 @@
 package com.vortex.handbrake.encoder;
 
 import com.vortex.handbrake.FilesHelper;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PhotoEncoderStrategy implements EncoderStrategy {
 
-    private FilesHelper filesHelper = new FilesHelper();
-
     @Override
-    public File encode(File srcFile, Consumer<String> logConsumer, Consumer<String> progressConsumer) {
+    public File encode(File srcFile, Consumer<String> logConsumer, Consumer<BigDecimal> progressConsumer) {
         try {
             File dstFile = getDstFile(srcFile);
-            Process process = Runtime.getRuntime().exec(filesHelper.getFileFullPath("/IrfanView/i_view64.exe")
+            Process process = Runtime.getRuntime().exec(FilesHelper.getFileFullPath("/IrfanView/i_view64.exe")
                     + " \"" + srcFile.getAbsolutePath() + "\""
                     + " /convert=\"" + dstFile.getAbsolutePath() + "\""
                     + " /jpgq=70" // quality setting, should be from 1 to 100
@@ -53,6 +53,11 @@ public class PhotoEncoderStrategy implements EncoderStrategy {
             System.out.println(ex.getMessage());
             throw new IllegalArgumentException("error");
         }
+    }
+
+    @Override
+    public void terminate() {
+        // nothing to do, just wait until current file is converted
     }
 
     private File getDstFile(File srcFile) {
